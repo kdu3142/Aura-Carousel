@@ -5,20 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Carousel</title>
     <style>
+        /* ===========================
+           CSS VARIABLES
+        ============================ */
         :root {
+            /* Shadow/Aura */
             --carousel-shadow-blur: 40px;
             --carousel-shadow-brightness: 1;
             --carousel-shadow-saturate: 1;
-            --carousel-shadow-opacity: 1;
             --carousel-shadow-radius: 12px;
 
+            /* Background */
             --carousel-background-blur: 8px;
             --carousel-background-scale: 1.1;
-            --carousel-background-overlay: rgba(0, 0, 0, 0.2);
 
+            /* Main Image */
             --main-image-radius: 12px;
             --main-image-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 
+            /* Navigation Buttons */
             --nav-button-blur: 10px;
             --nav-button-bg: rgba(255, 255, 255, 0.9);
             --nav-button-bg-hover: rgba(255, 255, 255, 1);
@@ -26,6 +31,7 @@
             --nav-button-transition: all 0.3s ease;
             --nav-button-scale-hover: 1.1;
 
+            /* Indicators */
             --indicator-size: 12px;
             --indicator-gap: 12px;
             --indicator-bg: rgba(255, 255, 255, 0.4);
@@ -33,11 +39,13 @@
             --indicator-transition: all 0.3s ease;
             --indicator-scale-active: 1.2;
 
+            /* Transitions */
             --carousel-container-transition: all 0.2s ease;
-            --main-image-transition: opacity 0.2s ease;
-            --main-image-fade-duration: 100ms;
         }
 
+        /* ===========================
+           GENERAL LAYOUT
+        ============================ */
         body {
             margin: 0;
             padding: 50px;
@@ -49,20 +57,24 @@
             font-family: Arial, sans-serif;
         }
 
+        /* ===========================
+           CAROUSEL STRUCTURE
+        ============================ */
         .carousel-wrapper {
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 20px;
-            /* Ensure enough space for shadow */
             min-width: 750px;
             min-height: 500px;
         }
 
+        /* ===========================
+           SHADOW/AURA EFFECTS
+        ============================ */
         .carousel-shadow,
         .carousel-shadow2 {
-            /* Aura/drop shadow effect behind container */
             position: absolute;
             top: 50%;
             left: 50%;
@@ -81,9 +93,11 @@
         .carousel-shadow2 {
             z-index: 1;
             opacity: 0;
-            pointer-events: none;
         }
 
+        /* ===========================
+           CAROUSEL CONTAINER
+        ============================ */
         .carousel-container {
             position: relative;
             width: 750px;
@@ -92,9 +106,11 @@
             overflow: hidden;
             z-index: 10;
             transition: var(--carousel-container-transition);
-            /* No padding at all */
         }
 
+        /* ===========================
+           BACKGROUND LAYERS
+        ============================ */
         .carousel-background,
         .carousel-background2 {
             position: absolute;
@@ -113,9 +129,11 @@
         .carousel-background2 {
             z-index: 2;
             opacity: 0;
-            pointer-events: none;
         }
 
+        /* ===========================
+           MAIN IMAGE
+        ============================ */
         .image-container {
             position: relative;
             width: 100%;
@@ -146,10 +164,12 @@
             object-fit: contain;
             border-radius: var(--main-image-radius);
             box-shadow: var(--main-image-shadow);
-            /* Remove fade transition */
             transition: none;
         }
 
+        /* ===========================
+           NAVIGATION BUTTONS
+        ============================ */
         .nav-button {
             position: absolute;
             top: 50%;
@@ -171,26 +191,21 @@
             backdrop-filter: blur(var(--nav-button-blur));
             -webkit-backdrop-filter: blur(var(--nav-button-blur));
         }
-
         .nav-button:hover {
             background: var(--nav-button-bg-hover);
             transform: translateY(-50%) scale(var(--nav-button-scale-hover));
             box-shadow: var(--nav-button-shadow-hover);
         }
+        .nav-button.prev { left: 20px; }
+        .nav-button.next { right: 20px; }
 
-        .nav-button.prev {
-            left: 20px;
-        }
-
-        .nav-button.next {
-            right: 20px;
-        }
-
+        /* ===========================
+           INDICATORS
+        ============================ */
         .indicators {
             display: flex;
             gap: var(--indicator-gap);
         }
-
         .indicator {
             width: var(--indicator-size);
             height: var(--indicator-size);
@@ -199,19 +214,20 @@
             cursor: pointer;
             transition: var(--indicator-transition);
         }
-
         .indicator.active {
             background: var(--indicator-bg-active);
             transform: scale(var(--indicator-scale-active));
         }
-
-        /* Fade transition */
-        /* .carousel-container transition already set above */
-        /* .main-image transition already set above */
     </style>
 </head>
 <body>
+    <!-- ===========================
+         LOADING MESSAGE
+    ============================ -->
     <div id="loadingMessage" style="color: #fff; font-size: 2rem; text-align: center;">Loading images...</div>
+    <!-- ===========================
+         CAROUSEL WRAPPER
+    ============================ -->
     <div class="carousel-wrapper" style="display:none;">
         <!-- Shadow layers -->
         <div class="carousel-shadow" id="carouselShadow"></div>
@@ -221,36 +237,45 @@
             <div class="carousel-background" id="carouselBackground"></div>
             <div class="carousel-background2" id="carouselBackground2"></div>
             <div class="image-container">
+                <!-- Main image (active) -->
                 <div class="main-image-wrapper" id="mainImageWrapper">
                     <img class="main-image" id="mainImage" src="" alt="Carousel Image">
                 </div>
+                <!-- Main image (incoming for animation) -->
                 <div class="main-image-wrapper" id="mainImageWrapper2" style="display:none;">
                     <img class="main-image" id="mainImage2" src="" alt="Carousel Image">
                 </div>
             </div>
+            <!-- Navigation buttons -->
             <button class="nav-button prev" onclick="previousImage()">‹</button>
             <button class="nav-button next" onclick="nextImage()">›</button>
         </div>
+        <!-- Indicators -->
         <div class="indicators" id="indicators"></div>
     </div>
 
     <script>
+        // ===========================
+        // IMAGE SOURCES
+        // ===========================
         const images = [
+            // SVG placeholders
             'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNmZjc3NTciLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZmI4NDciLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2EpIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuMzVlbSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC44Ij5HT0xERU4gSU1BR0U8L3RleHQ+PC9zdmc+',
             'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM0ZGE2ZmYiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMGJjZjIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2IpIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuMzVlbSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC44Ij5CRUU0RUFURVJTPC90ZXh0Pjwvc3ZnPg==',
+            // Real images
             'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Golde33443.jpg/640px-Golde33443.jpg',
             'https://upload.wikimedia.org/wikipedia/commons/f/f3/European_Bee-Eaters_%28Merops_apiaster%29_%2852802163574%29.jpg',
             'https://www.inchcalculator.com/wp-content/uploads/2018/11/ratio-calculation.png',
             'https://www.shutterstock.com/shutterstock/photos/1485092318/display_1500/stock-photo-sao-paulo-sp-brazil-april-crowded-subway-station-1485092318.jpg'
         ];
 
-        let currentIndex = 0;
-        let lastIndex = 0;
+        // ===========================
+        // DOM ELEMENTS
+        // ===========================
         const mainImage = document.getElementById('mainImage');
         const mainImageWrapper = document.getElementById('mainImageWrapper');
         const mainImage2 = document.getElementById('mainImage2');
         const mainImageWrapper2 = document.getElementById('mainImageWrapper2');
-        const carousel = document.getElementById('carousel');
         const indicatorsContainer = document.getElementById('indicators');
         const carouselWrapper = document.querySelector('.carousel-wrapper');
         const loadingMessage = document.getElementById('loadingMessage');
@@ -259,21 +284,29 @@
         const carouselBackground = document.getElementById('carouselBackground');
         const carouselBackground2 = document.getElementById('carouselBackground2');
 
-        // Preload images
+        // ===========================
+        // STATE
+        // ===========================
+        let currentIndex = 0;
+
+        // ===========================
+        // IMAGE PRELOADING
+        // ===========================
         function preloadImages(imageUrls, callback) {
             let loaded = 0;
-            const total = imageUrls.length;
             imageUrls.forEach(src => {
                 const img = new Image();
                 img.onload = img.onerror = () => {
                     loaded++;
-                    if (loaded === total) callback();
+                    if (loaded === imageUrls.length) callback();
                 };
                 img.src = src;
             });
         }
 
-        // Create indicators
+        // ===========================
+        // INDICATORS
+        // ===========================
         function createIndicators() {
             indicatorsContainer.innerHTML = '';
             images.forEach((_, index) => {
@@ -284,7 +317,9 @@
             });
         }
 
-        // Update image and all background effects
+        // ===========================
+        // IMAGE UPDATE & ANIMATION
+        // ===========================
         function updateImage(direction = 0) {
             const currentImage = images[currentIndex];
 
@@ -330,7 +365,6 @@
                     mainImageWrapper.style.transform = 'translateX(0)';
                     mainImageWrapper2.style.display = 'none';
 
-                    // Swap backgrounds/shadows
                     carouselBackground.style.backgroundImage = `url('${currentImage}')`;
                     carouselBackground.style.opacity = '1';
                     carouselBackground2.style.opacity = '0';
@@ -358,14 +392,15 @@
             });
         }
 
+        // ===========================
+        // NAVIGATION FUNCTIONS
+        // ===========================
         function nextImage() {
-            lastIndex = currentIndex;
             currentIndex = (currentIndex + 1) % images.length;
             updateImage(1);
         }
 
         function previousImage() {
-            lastIndex = currentIndex;
             currentIndex = (currentIndex - 1 + images.length) % images.length;
             updateImage(-1);
         }
@@ -373,18 +408,21 @@
         function goToImage(index) {
             if (index === currentIndex) return;
             let direction = index > currentIndex ? 1 : -1;
-            lastIndex = currentIndex;
             currentIndex = index;
             updateImage(direction);
         }
 
-        // Keyboard navigation
+        // ===========================
+        // KEYBOARD NAVIGATION
+        // ===========================
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowRight') nextImage();
             if (e.key === 'ArrowLeft') previousImage();
         });
 
-        // Initialize carousel after images are preloaded
+        // ===========================
+        // INITIALIZATION
+        // ===========================
         preloadImages(images, () => {
             loadingMessage.style.display = 'none';
             carouselWrapper.style.display = '';
