@@ -5,6 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Photo Carousel</title>
     <style>
+        :root {
+            --carousel-shadow-blur: 40px;
+            --carousel-shadow-brightness: 1;
+            --carousel-shadow-saturate: 1;
+            --carousel-shadow-opacity: 1;
+            --carousel-shadow-radius: 0px;
+
+            --carousel-background-blur: 8px;
+            --carousel-background-scale: 1.1;
+            --carousel-background-overlay: rgba(0, 0, 0, 0.2);
+
+            --main-image-radius: 8px;
+            --main-image-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+            --nav-button-blur: 10px;
+            --nav-button-bg: rgba(255, 255, 255, 0.9);
+            --nav-button-bg-hover: rgba(255, 255, 255, 1);
+            --nav-button-shadow-hover: 0 5px 15px rgba(0, 0, 0, 0.3);
+            --nav-button-transition: all 0.3s ease;
+            --nav-button-scale-hover: 1.1;
+
+            --indicator-size: 12px;
+            --indicator-gap: 12px;
+            --indicator-bg: rgba(255, 255, 255, 0.4);
+            --indicator-bg-active: rgba(255, 255, 255, 0.9);
+            --indicator-transition: all 0.3s ease;
+            --indicator-scale-active: 1.2;
+
+            --carousel-container-transition: all 0.5s ease;
+            --main-image-transition: opacity 0.3s ease;
+            --main-image-fade-duration: 150ms;
+        }
+
         body {
             margin: 0;
             padding: 50px;
@@ -24,20 +57,20 @@
             gap: 20px;
         }
 
-        /* Aura/drop shadow effect behind container */
         .carousel-shadow {
+            /* Aura/drop shadow effect behind container */
             position: fixed;
-            top: 50%;
+            top: 53%;
             left: 50%;
-            width: 750px;  /* 750px + 60px */
-            height: 500px; /* 500px + 60px */
+            width: 750px;
+            height: 500px;
             transform: translate(-50%, -50%);
             background-size: cover;
             background-position: center;
-            filter: blur(40px) brightness(0.8) saturate(1.5);
-            opacity: 1;
+            filter: blur(var(--carousel-shadow-blur)) brightness(var(--carousel-shadow-brightness)) saturate(var(--carousel-shadow-saturate));
+            opacity: var(--carousel-shadow-opacity);
             z-index: 1;
-            border-radius: 40px;
+            border-radius: var(--carousel-shadow-radius);
         }
 
         .carousel-container {
@@ -47,9 +80,10 @@
             border-radius: 12px;
             overflow: hidden;
             z-index: 10;
+            transition: var(--carousel-container-transition);
+            /* No padding at all */
         }
 
-        /* Container background - blurred version of image with overlay */
         .carousel-background {
             position: absolute;
             top: 0;
@@ -58,8 +92,8 @@
             height: 100%;
             background-size: cover;
             background-position: center;
-            filter: blur(8px);
-            transform: scale(1.1);
+            filter: blur(var(--carousel-background-blur));
+            transform: scale(var(--carousel-background-scale));
             z-index: 1;
         }
 
@@ -70,10 +104,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--carousel-background-overlay);
         }
 
-        /* Main image container */
         .image-container {
             position: relative;
             width: 100%;
@@ -88,16 +121,16 @@
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
-            border-radius: 8px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-radius: var(--main-image-radius);
+            box-shadow: var(--main-image-shadow);
+            transition: var(--main-image-transition);
         }
 
-        /* Navigation buttons */
         .nav-button {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.9);
+            background: var(--nav-button-bg);
             border: none;
             width: 50px;
             height: 50px;
@@ -109,15 +142,15 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            transition: all 0.3s ease;
+            transition: var(--nav-button-transition);
             z-index: 3;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(var(--nav-button-blur));
         }
 
         .nav-button:hover {
-            background: rgba(255, 255, 255, 1);
-            transform: translateY(-50%) scale(1.1);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            background: var(--nav-button-bg-hover);
+            transform: translateY(-50%) scale(var(--nav-button-scale-hover));
+            box-shadow: var(--nav-button-shadow-hover);
         }
 
         .nav-button.prev {
@@ -128,38 +161,33 @@
             right: 20px;
         }
 
-        /* Indicators */
         .indicators {
             display: flex;
-            gap: 12px;
+            gap: var(--indicator-gap);
         }
 
         .indicator {
-            width: 12px;
-            height: 12px;
+            width: var(--indicator-size);
+            height: var(--indicator-size);
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
+            background: var(--indicator-bg);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--indicator-transition);
         }
 
         .indicator.active {
-            background: rgba(255, 255, 255, 0.9);
-            transform: scale(1.2);
+            background: var(--indicator-bg-active);
+            transform: scale(var(--indicator-scale-active));
         }
 
         /* Fade transition */
-        .carousel-container {
-            transition: all 0.5s ease;
-        }
-
-        .main-image {
-            transition: opacity 0.3s ease;
-        }
+        /* .carousel-container transition already set above */
+        /* .main-image transition already set above */
     </style>
 </head>
 <body>
-    <div class="carousel-wrapper">
+    <div id="loadingMessage" style="color: #fff; font-size: 2rem; text-align: center;">Loading images...</div>
+    <div class="carousel-wrapper" style="display:none;">
         <div class="carousel-container" id="carousel">
             <div class="carousel-shadow" id="carouselShadow"></div>
             <div class="carousel-background" id="carouselBackground"></div>
@@ -177,13 +205,31 @@
             'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImEiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiNmZjc3NTciLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNmZmI4NDciLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2EpIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuMzVlbSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC44Ij5HT0xERU4gSU1BR0U8L3RleHQ+PC9zdmc+',
             'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9ImIiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiM0ZGE2ZmYiLz48c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiMwMGJjZjIiLz48L2xpbmVhckdyYWRpZW50PjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2IpIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSI0OCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuMzVlbSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iMC44Ij5CRUU0RUFURVJTPC90ZXh0Pjwvc3ZnPg==',
             'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Golde33443.jpg/640px-Golde33443.jpg',
-            'https://upload.wikimedia.org/wikipedia/commons/f/f3/European_Bee-Eaters_%28Merops_apiaster%29_%2852802163574%29.jpg'
+            'https://upload.wikimedia.org/wikipedia/commons/f/f3/European_Bee-Eaters_%28Merops_apiaster%29_%2852802163574%29.jpg',
+            'https://www.inchcalculator.com/wp-content/uploads/2018/11/ratio-calculation.png',
+            'https://www.shutterstock.com/shutterstock/photos/1485092318/display_1500/stock-photo-sao-paulo-sp-brazil-april-crowded-subway-station-1485092318.jpg'
         ];
 
         let currentIndex = 0;
         const mainImage = document.getElementById('mainImage');
         const carousel = document.getElementById('carousel');
         const indicatorsContainer = document.getElementById('indicators');
+        const carouselWrapper = document.querySelector('.carousel-wrapper');
+        const loadingMessage = document.getElementById('loadingMessage');
+
+        // Preload images
+        function preloadImages(imageUrls, callback) {
+            let loaded = 0;
+            const total = imageUrls.length;
+            imageUrls.forEach(src => {
+                const img = new Image();
+                img.onload = img.onerror = () => {
+                    loaded++;
+                    if (loaded === total) callback();
+                };
+                img.src = src;
+            });
+        }
 
         // Create indicators
         function createIndicators() {
@@ -206,7 +252,7 @@
             setTimeout(() => {
                 // Update main image
                 mainImage.src = currentImage;
-                
+
                 // Update shadow background
                 carouselShadow.style.backgroundImage = `url('${currentImage}')`;
                 
@@ -220,7 +266,7 @@
                 document.querySelectorAll('.indicator').forEach((indicator, index) => {
                     indicator.classList.toggle('active', index === currentIndex);
                 });
-            }, 150);
+            }, parseInt(getComputedStyle(document.documentElement).getPropertyValue('--main-image-fade-duration')));
         }
 
         function nextImage() {
@@ -244,9 +290,13 @@
             if (e.key === 'ArrowLeft') previousImage();
         });
 
-        // Initialize
-        createIndicators();
-        updateImage();
+        // Initialize carousel after images are preloaded
+        preloadImages(images, () => {
+            loadingMessage.style.display = 'none';
+            carouselWrapper.style.display = '';
+            createIndicators();
+            updateImage();
+        });
     </script>
 </body>
 </html>
