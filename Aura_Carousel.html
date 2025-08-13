@@ -10,13 +10,13 @@
             --carousel-shadow-brightness: 1;
             --carousel-shadow-saturate: 1;
             --carousel-shadow-opacity: 1;
-            --carousel-shadow-radius: 0px;
+            --carousel-shadow-radius: 12px;
 
             --carousel-background-blur: 8px;
             --carousel-background-scale: 1.1;
             --carousel-background-overlay: rgba(0, 0, 0, 0.2);
 
-            --main-image-radius: 8px;
+            --main-image-radius: 12px;
             --main-image-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 
             --nav-button-blur: 10px;
@@ -33,9 +33,9 @@
             --indicator-transition: all 0.3s ease;
             --indicator-scale-active: 1.2;
 
-            --carousel-container-transition: all 0.5s ease;
-            --main-image-transition: opacity 0.3s ease;
-            --main-image-fade-duration: 150ms;
+            --carousel-container-transition: all 0.2s ease;
+            --main-image-transition: opacity 0.2s ease;
+            --main-image-fade-duration: 100ms;
         }
 
         body {
@@ -55,12 +55,15 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            /* Ensure enough space for shadow */
+            min-width: 750px;
+            min-height: 500px;
         }
 
         .carousel-shadow {
             /* Aura/drop shadow effect behind container */
-            position: fixed;
-            top: 53%;
+            position: absolute;
+            top: 50%;
             left: 50%;
             width: 750px;
             height: 500px;
@@ -69,8 +72,9 @@
             background-position: center;
             filter: blur(var(--carousel-shadow-blur)) brightness(var(--carousel-shadow-brightness)) saturate(var(--carousel-shadow-saturate));
             opacity: var(--carousel-shadow-opacity);
-            z-index: 1;
+            z-index: 0; /* Lower than carousel-container */
             border-radius: var(--carousel-shadow-radius);
+            pointer-events: none; /* Prevent interaction */
         }
 
         .carousel-container {
@@ -145,6 +149,7 @@
             transition: var(--nav-button-transition);
             z-index: 3;
             backdrop-filter: blur(var(--nav-button-blur));
+            -webkit-backdrop-filter: blur(var(--nav-button-blur));
         }
 
         .nav-button:hover {
@@ -188,8 +193,10 @@
 <body>
     <div id="loadingMessage" style="color: #fff; font-size: 2rem; text-align: center;">Loading images...</div>
     <div class="carousel-wrapper" style="display:none;">
+        <!-- Move shadow outside container -->
+        <div class="carousel-shadow" id="carouselShadow"></div>
         <div class="carousel-container" id="carousel">
-            <div class="carousel-shadow" id="carouselShadow"></div>
+            <!-- Remove shadow from here -->
             <div class="carousel-background" id="carouselBackground"></div>
             <div class="image-container">
                 <img class="main-image" id="mainImage" src="" alt="Carousel Image">
