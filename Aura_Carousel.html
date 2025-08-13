@@ -60,7 +60,8 @@
             min-height: 500px;
         }
 
-        .carousel-shadow {
+        .carousel-shadow,
+        .carousel-shadow2 {
             /* Aura/drop shadow effect behind container */
             position: absolute;
             top: 50%;
@@ -71,10 +72,16 @@
             background-size: cover;
             background-position: center;
             filter: blur(var(--carousel-shadow-blur)) brightness(var(--carousel-shadow-brightness)) saturate(var(--carousel-shadow-saturate));
-            opacity: var(--carousel-shadow-opacity);
-            z-index: 0; /* Lower than carousel-container */
+            opacity: 1;
+            z-index: 0;
             border-radius: var(--carousel-shadow-radius);
-            pointer-events: none; /* Prevent interaction */
+            pointer-events: none;
+            transition: opacity 0.4s cubic-bezier(.7,.2,.3,1);
+        }
+        .carousel-shadow2 {
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
         }
 
         .carousel-container {
@@ -88,7 +95,8 @@
             /* No padding at all */
         }
 
-        .carousel-background {
+        .carousel-background,
+        .carousel-background2 {
             position: absolute;
             top: 0;
             left: 0;
@@ -99,16 +107,13 @@
             filter: blur(var(--carousel-background-blur));
             transform: scale(var(--carousel-background-scale));
             z-index: 1;
+            opacity: 1;
+            transition: opacity 0.4s cubic-bezier(.7,.2,.3,1);
         }
-
-        .carousel-background::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: var(--carousel-background-overlay);
+        .carousel-background2 {
+            z-index: 2;
+            opacity: 0;
+            pointer-events: none;
         }
 
         .image-container {
@@ -119,6 +124,20 @@
             justify-content: center;
             align-items: center;
             z-index: 2;
+            overflow: hidden;
+        }
+
+        .main-image-wrapper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            transition: transform 0.2s cubic-bezier(.7,.2,.3,1);
+            will-change: transform;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .main-image {
@@ -127,7 +146,8 @@
             object-fit: contain;
             border-radius: var(--main-image-radius);
             box-shadow: var(--main-image-shadow);
-            transition: var(--main-image-transition);
+            /* Remove fade transition */
+            transition: none;
         }
 
         .nav-button {
@@ -193,13 +213,20 @@
 <body>
     <div id="loadingMessage" style="color: #fff; font-size: 2rem; text-align: center;">Loading images...</div>
     <div class="carousel-wrapper" style="display:none;">
-        <!-- Move shadow outside container -->
+        <!-- Shadow layers -->
         <div class="carousel-shadow" id="carouselShadow"></div>
+        <div class="carousel-shadow2" id="carouselShadow2"></div>
         <div class="carousel-container" id="carousel">
-            <!-- Remove shadow from here -->
+            <!-- Background layers -->
             <div class="carousel-background" id="carouselBackground"></div>
+            <div class="carousel-background2" id="carouselBackground2"></div>
             <div class="image-container">
-                <img class="main-image" id="mainImage" src="" alt="Carousel Image">
+                <div class="main-image-wrapper" id="mainImageWrapper">
+                    <img class="main-image" id="mainImage" src="" alt="Carousel Image">
+                </div>
+                <div class="main-image-wrapper" id="mainImageWrapper2" style="display:none;">
+                    <img class="main-image" id="mainImage2" src="" alt="Carousel Image">
+                </div>
             </div>
             <button class="nav-button prev" onclick="previousImage()">‹</button>
             <button class="nav-button next" onclick="nextImage()">›</button>
@@ -218,11 +245,19 @@
         ];
 
         let currentIndex = 0;
+        let lastIndex = 0;
         const mainImage = document.getElementById('mainImage');
+        const mainImageWrapper = document.getElementById('mainImageWrapper');
+        const mainImage2 = document.getElementById('mainImage2');
+        const mainImageWrapper2 = document.getElementById('mainImageWrapper2');
         const carousel = document.getElementById('carousel');
         const indicatorsContainer = document.getElementById('indicators');
         const carouselWrapper = document.querySelector('.carousel-wrapper');
         const loadingMessage = document.getElementById('loadingMessage');
+        const carouselShadow = document.getElementById('carouselShadow');
+        const carouselShadow2 = document.getElementById('carouselShadow2');
+        const carouselBackground = document.getElementById('carouselBackground');
+        const carouselBackground2 = document.getElementById('carouselBackground2');
 
         // Preload images
         function preloadImages(imageUrls, callback) {
@@ -250,45 +285,97 @@
         }
 
         // Update image and all background effects
-        function updateImage() {
+        function updateImage(direction = 0) {
             const currentImage = images[currentIndex];
-            
-            // Fade out
-            mainImage.style.opacity = '0';
-            
-            setTimeout(() => {
-                // Update main image
-                mainImage.src = currentImage;
 
-                // Update shadow background
+            if (direction !== 0) {
+                // Prepare incoming image
+                mainImage2.src = currentImage;
+                mainImageWrapper2.style.display = '';
+                mainImageWrapper2.style.transition = 'none';
+                mainImageWrapper2.style.transform = `translateX(${direction * 100}%)`;
+
+                // Prepare incoming backgrounds/shadows
+                carouselBackground2.style.backgroundImage = `url('${currentImage}')`;
+                carouselBackground2.style.opacity = '0';
+                carouselShadow2.style.backgroundImage = `url('${currentImage}')`;
+                carouselShadow2.style.opacity = '0';
+                carouselBackground2.style.transition = 'none';
+                carouselShadow2.style.transition = 'none';
+                carouselBackground2.offsetHeight; // force reflow
+                carouselShadow2.offsetHeight;
+
+                setTimeout(() => {
+                    // Animate both wrappers
+                    mainImageWrapper.style.transition = 'transform 0.4s cubic-bezier(.7,.2,.3,1)';
+                    mainImageWrapper2.style.transition = 'transform 0.4s cubic-bezier(.7,.2,.3,1)';
+                    mainImageWrapper.style.transform = `translateX(${direction * -100}%)`;
+                    mainImageWrapper2.style.transform = 'translateX(0)';
+
+                    // Animate backgrounds/shadows fade
+                    carouselBackground.style.transition = 'opacity 0.4s cubic-bezier(.7,.2,.3,1)';
+                    carouselBackground2.style.transition = 'opacity 0.4s cubic-bezier(.7,.2,.3,1)';
+                    carouselShadow.style.transition = 'opacity 0.4s cubic-bezier(.7,.2,.3,1)';
+                    carouselShadow2.style.transition = 'opacity 0.4s cubic-bezier(.7,.2,.3,1)';
+                    carouselBackground.style.opacity = '0';
+                    carouselBackground2.style.opacity = '1';
+                    carouselShadow.style.opacity = '0';
+                    carouselShadow2.style.opacity = '1';
+                }, 20);
+
+                // After animation, swap images and backgrounds
+                setTimeout(() => {
+                    mainImage.src = currentImage;
+                    mainImageWrapper.style.transition = 'none';
+                    mainImageWrapper.style.transform = 'translateX(0)';
+                    mainImageWrapper2.style.display = 'none';
+
+                    // Swap backgrounds/shadows
+                    carouselBackground.style.backgroundImage = `url('${currentImage}')`;
+                    carouselBackground.style.opacity = '1';
+                    carouselBackground2.style.opacity = '0';
+                    carouselShadow.style.backgroundImage = `url('${currentImage}')`;
+                    carouselShadow.style.opacity = '1';
+                    carouselShadow2.style.opacity = '0';
+                }, 420);
+            } else {
+                // First load, no animation
+                mainImage.src = currentImage;
+                mainImageWrapper.style.transition = 'none';
+                mainImageWrapper.style.transform = 'translateX(0)';
+                mainImageWrapper2.style.display = 'none';
                 carouselShadow.style.backgroundImage = `url('${currentImage}')`;
-                
-                // Update container background
+                carouselShadow.style.opacity = '1';
+                carouselShadow2.style.opacity = '0';
                 carouselBackground.style.backgroundImage = `url('${currentImage}')`;
-                
-                // Fade in
-                mainImage.style.opacity = '1';
-                
-                // Update indicators
-                document.querySelectorAll('.indicator').forEach((indicator, index) => {
-                    indicator.classList.toggle('active', index === currentIndex);
-                });
-            }, parseInt(getComputedStyle(document.documentElement).getPropertyValue('--main-image-fade-duration')));
+                carouselBackground.style.opacity = '1';
+                carouselBackground2.style.opacity = '0';
+            }
+
+            // Update indicators
+            document.querySelectorAll('.indicator').forEach((indicator, index) => {
+                indicator.classList.toggle('active', index === currentIndex);
+            });
         }
 
         function nextImage() {
+            lastIndex = currentIndex;
             currentIndex = (currentIndex + 1) % images.length;
-            updateImage();
+            updateImage(1);
         }
 
         function previousImage() {
+            lastIndex = currentIndex;
             currentIndex = (currentIndex - 1 + images.length) % images.length;
-            updateImage();
+            updateImage(-1);
         }
 
         function goToImage(index) {
+            if (index === currentIndex) return;
+            let direction = index > currentIndex ? 1 : -1;
+            lastIndex = currentIndex;
             currentIndex = index;
-            updateImage();
+            updateImage(direction);
         }
 
         // Keyboard navigation
